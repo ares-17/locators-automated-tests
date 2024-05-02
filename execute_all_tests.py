@@ -28,7 +28,7 @@ tags = [item.strip().strip('"') for item in config.get('execute_all_tests', 'tag
 created_tags = []
 
 def run_script(script):
-    subprocess.run(script, shell=True, check=True)
+    subprocess.run(script, shell=True, check=True, stdout= subprocess.DEVNULL)
 
 def clean_workspace():
     run_script(f"git reset --hard origin/master")
@@ -45,6 +45,20 @@ def update_pom():
         fin = open(f"{file}", "wt")
         fin.write(data)
         fin.close()
+
+def update_action_files():
+    for file in actions_files:
+        file_path = os.path.join(os.getcwd(), file)
+        if os.path.exists(file_path):
+            with open(file_path, "rt") as fin:
+                data = fin.read()
+                data = data.replace('HookTestRepo', repo)
+                data = data.replace('Tesi-StrumentoGenerale', repo)
+            
+            with open(file_path, "wt") as fout:
+                fout.write(data)
+        else:
+            print(f"Il file {file} non esiste.")
 
 def remove_old_locators():
     fileList = glob.glob(f"{old_locators_path}/*.java")
@@ -172,6 +186,8 @@ for tag in tags:
     branch_name = create_branch(tag)
     print(f"[{tag}]: update pom")
     update_pom()
+    print(f"[{tag}]: update action files")
+    update_action_files()
     print(f"[{tag}]: removing old locators")
     remove_old_locators()
     print(f"[{tag}]: adding new locators")
