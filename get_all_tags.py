@@ -5,7 +5,7 @@ from datetime import datetime
 from configparser import ConfigParser
 
 config = ConfigParser()
-config.read('config.ini')
+config.read('../config.ini')
 
 # Funzione per eseguire uno script bash
 def run_script(script):
@@ -14,7 +14,7 @@ def run_script(script):
 def get_tags():
     try:
         current_dir = os.getcwd()
-        git_repo_path = config.get("get_all_tags", "git_repo_path")
+        git_repo_path = config.get("get_all_tags", "git_repo_path").strip('"')
         os.chdir(git_repo_path)
 
         tags = subprocess.check_output(["git", "tag"], text=True).splitlines()

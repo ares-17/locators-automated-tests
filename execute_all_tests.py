@@ -10,18 +10,20 @@ import time
 import zipfile
 
 config = ConfigParser()
-config.read('config.ini')
+config.read('../config.ini')
 
 current_date = datetime.today().strftime('%d_%m_%Y_%H_%M')
 
-cwd = os.getcwd()
-project_path = config.get('variabili', 'project_path')
-owner = config.get('variabili', 'owner')
-repo = config.get('variabili', 'repo')
+project_location = config.get('general', 'project_location').strip('"')
+cloned_project_path = config.get('execute_all_tests', 'cloned_project_path').strip('"')
+owner = config.get('execute_all_tests', 'owner').strip('"')
+repo = config.get('execute_all_tests', 'repo').strip('"')
+old_locators_path = config.get('execute_all_tests', 'old_locators_path').strip('"')
+github_actions_path = config.get('execute_all_tests', 'github_actions_path').strip('"')
 
-pom_files = [item.strip() for item in config.get('variabili', 'pom_files').split(',')]
-actions_files = [item.strip() for item in config.get('variabili', 'actions_files').split(',')]
-tags = [item.strip() for item in config.get('variabili', 'tags').split(',')]
+pom_files = [item.strip().strip('"') for item in config.get('execute_all_tests', 'pom_files').split(',')]
+actions_files = [item.strip().strip('"') for item in config.get('execute_all_tests', 'actions_files').split(',')]
+tags = [item.strip().strip('"') for item in config.get('execute_all_tests', 'tags').split(',')]
 
 created_tags = []
 
@@ -57,7 +59,7 @@ def update_action_files():
         fin.close()
 
 def remove_old_locators():
-    fileList = glob.glob('project-test-headless/src/test/java/com/example/TesiIntegrazioneProgettoEsterno/*.java')
+    fileList = glob.glob(f"{old_locators_path}/*.java")
     for filePath in fileList:
         try:
             os.remove(filePath)
@@ -65,9 +67,9 @@ def remove_old_locators():
             print("Error while deleting file : ", filePath)
 
 def add_new_locators():
-    fileList = glob.glob(f'{cwd}/test_cases/*.java')
+    fileList = glob.glob(f'{project_location}/test_cases/*.java')
     for filePath in fileList:
-        shutil.copy(filePath, 'project-test-headless/src/test/java/com/example/TesiIntegrazioneProgettoEsterno/')
+        shutil.copy(filePath, f"{old_locators_path}/")
 
 def create_branch(tag_name):
     branch = f"{tag_name}_branch_{current_date}"
@@ -116,7 +118,7 @@ def copy_github_actions():
             os.remove(filePath)
         except:
             print("Error while deleting file : ", filePath)
-    fileList = glob.glob(f'{cwd}/../.github/workflows/*.yml')
+    fileList = glob.glob(f'{github_actions_path}/*.yml')
     for filePath in fileList:
         shutil.copy(filePath, '.github/workflows/')
 
@@ -128,7 +130,7 @@ def remove_old_tests():
 
 def download_releases():
     base_url = f"https://github.com/{owner}/{repo}/archive/refs/tags/"
-    output_dir = f"{cwd}/release_download"
+    output_dir = f"{project_location}/release_download"
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -173,9 +175,8 @@ def wait_for_actions_completion():
         else:
             time.sleep(30)
 
-os.chdir(project_path)
+os.chdir(cloned_project_path)
 clean_workspace()
-
 
 for tag in tags:
     print(f"INIT [{tag}] ----------------")
@@ -183,8 +184,8 @@ for tag in tags:
     branch_name = create_branch(tag)
     print(f"[{tag}]: update pom")
     update_pom()
-    print(f"[{tag}]: update action files")
-    update_action_files()
+    #print(f"[{tag}]: update action files")
+    #update_action_files()
     print(f"[{tag}]: removing old locators")
     remove_old_locators()
     print(f"[{tag}]: adding new locators")

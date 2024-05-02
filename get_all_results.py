@@ -4,11 +4,11 @@ import glob
 from configparser import ConfigParser
 
 config = ConfigParser()
-config.read('config.ini')
+config.read('../config.ini')
 
 cwd = os.getcwd()
-output_dir = f"{cwd}/../Report-Separati"
-base_folder = "/home/aress/Documenti/Software Testing/progetto/A1-ContactList/automated-test/release_download"
+output_dir = config.get('get_all_results', 'output_dir').strip('"')
+base_folder =  config.get('get_all_results', 'base_folder').strip('"')
 
 def get_path_first_subfolder(folder):
     subfolders = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isdir(os.path.join(folder, f))]
@@ -23,6 +23,7 @@ def examine_folders_in_directory(directory):
 
     # Ottieni la lista dei percorsi completi delle cartelle contenute nella directory
     folders = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isdir(os.path.join(directory, f))]
+    
     # Array che conterrà i percorsi alla prima cartella contenuta in ogni elemento di "folders"
     first_subfolder_paths = []
 
