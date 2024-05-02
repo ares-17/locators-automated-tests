@@ -46,18 +46,6 @@ def update_pom():
         fin.write(data)
         fin.close()
 
-def update_action_files():
-    for file in actions_files:
-        fin = open(f"{file}", "rt")
-        data = fin.read()
-        data = data.replace('HookTestRepo', repo)
-        data = data.replace('Tesi-StrumentoGenerale', repo)
-        fin.close()
-
-        fin = open(f"{file}", "wt")
-        fin.write(data)
-        fin.close()
-
 def remove_old_locators():
     fileList = glob.glob(f"{old_locators_path}/*.java")
     for filePath in fileList:
@@ -184,8 +172,6 @@ for tag in tags:
     branch_name = create_branch(tag)
     print(f"[{tag}]: update pom")
     update_pom()
-    #print(f"[{tag}]: update action files")
-    #update_action_files()
     print(f"[{tag}]: removing old locators")
     remove_old_locators()
     print(f"[{tag}]: adding new locators")
