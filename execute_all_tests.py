@@ -8,6 +8,9 @@ import json
 from configparser import ConfigParser
 import time
 import zipfile
+import sys
+
+wait_k_tags = False
 
 config = ConfigParser()
 config.read('../config.ini')
@@ -26,6 +29,14 @@ actions_files = [item.strip().strip('"') for item in config.get('execute_all_tes
 tags = [item.strip().strip('"') for item in config.get('execute_all_tests', 'tags').split(',')]
 
 created_tags = []
+
+def read_first_param():
+    if len(sys.argv) > 1:
+        first_arg = sys.argv[1]
+        if first_arg != "wait-k":
+            wait_k_tags = False
+        else:
+            wait_k_tags = True
 
 def run_script(script):
     subprocess.run(script, shell=True, check=True, stdout= subprocess.DEVNULL)
@@ -177,6 +188,10 @@ def wait_for_actions_completion():
         else:
             time.sleep(30)
 
+def tag_contain_k(tag):
+    return True if 'k' in tag else False
+
+read_first_param()
 os.chdir(cloned_project_path)
 clean_workspace()
 
@@ -198,9 +213,21 @@ for tag in tags:
     remove_old_tests()
     print(f"[{tag}]: commit and push")
     commmit_push_branch(branch_name)
+
+    if wait_k_tags and tag_contain_k(tag):
+        continue
+
     print(f"[{tag}]: creating release")
     create_github_release(tag, branch_name)
     print(f"[{tag}]: end tag\n\n")
+
+if wait_k_tags:
+    wait_for_actions_completion()
+    for tag in tags:
+        if tag_contain_k(tag):
+            print(f"[{tag}]: creating release")
+            create_github_release(tag, branch_name)
+            print(f"[{tag}]: end tag\n\n")
 
 print(f"INIT DOWNLOAD STEP ----------------")
 time.sleep(60)
