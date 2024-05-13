@@ -191,6 +191,9 @@ def wait_for_actions_completion():
 def tag_contain_k(tag):
     return True if 'k' in tag else False
 
+def call_k_trigger_action(tag):
+    run_script("gh workflow run mainOnPush.yml")
+
 read_first_param()
 os.chdir(cloned_project_path)
 clean_workspace()
@@ -215,6 +218,7 @@ for tag in tags:
     commmit_push_branch(branch_name)
 
     if wait_k_tags and tag_contain_k(tag):
+        call_k_trigger_action()
         continue
 
     print(f"[{tag}]: creating release")
