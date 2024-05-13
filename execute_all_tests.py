@@ -10,8 +10,6 @@ import time
 import zipfile
 import sys
 
-wait_k_tags = False
-
 config = ConfigParser()
 config.read('../config.ini')
 
@@ -29,14 +27,6 @@ actions_files = [item.strip().strip('"') for item in config.get('execute_all_tes
 tags = [item.strip().strip('"') for item in config.get('execute_all_tests', 'tags').split(',')]
 
 created_tags = []
-
-def read_first_param():
-    if len(sys.argv) > 1:
-        first_arg = sys.argv[1]
-        if first_arg != "wait-k":
-            wait_k_tags = False
-        else:
-            wait_k_tags = True
 
 def run_script(script):
     subprocess.run(script, shell=True, check=True, stdout= subprocess.DEVNULL)
@@ -191,10 +181,9 @@ def wait_for_actions_completion():
 def tag_contain_k(tag):
     return True if 'k' in tag else False
 
-def call_k_trigger_action(tag):
-    run_script("gh workflow run mainOnPush.yml")
+def call_k_trigger_action(branch_name):
+    run_script(f"gh workflow run mainOnPush.yml --ref {branch_name}")
 
-read_first_param()
 os.chdir(cloned_project_path)
 clean_workspace()
 
@@ -217,24 +206,26 @@ for tag in tags:
     print(f"[{tag}]: commit and push")
     commmit_push_branch(branch_name)
 
-    if wait_k_tags and tag_contain_k(tag):
-        call_k_trigger_action()
+    if tag_contain_k(tag):
+        call_k_trigger_action(branch_name)
         continue
 
     print(f"[{tag}]: creating release")
     create_github_release(tag, branch_name)
     print(f"[{tag}]: end tag\n\n")
 
-if wait_k_tags:
-    wait_for_actions_completion()
-    for tag in tags:
-        if tag_contain_k(tag):
-            print(f"[{tag}]: creating release")
-            create_github_release(tag, branch_name)
-            print(f"[{tag}]: end tag\n\n")
+print(f"WAITING STEP ----------------")
+# wait for mainOnPush.yml action for "k" tags
+wait_for_actions_completion()
+for tag in tags:
+    if tag_contain_k(tag):
+        print(f"[{tag}]: creating release")
+        create_github_release(tag, branch_name)
+        print(f"[{tag}]: end tag\n\n")
+
+
+time.sleep(60)
+wait_for_actions_completion()
 
 print(f"INIT DOWNLOAD STEP ----------------")
-time.sleep(60)
-print(f"end of 60-second wait")
-wait_for_actions_completion()
 download_releases()
