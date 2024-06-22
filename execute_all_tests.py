@@ -224,7 +224,6 @@ for tag in tags:
         print(f"[{tag}]: end tag\n\n")
 
 
-time.sleep(60)
 wait_for_actions_completion()
 
 print(f"INIT DOWNLOAD STEP ----------------")
