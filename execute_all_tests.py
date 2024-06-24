@@ -165,7 +165,7 @@ def wait_for_actions_completion():
     headers = {
         "Accept": "application/vnd.github.v3+json"
     }
-
+    time.sleep(60) # Added wait to ensure readout of initiated actions, regardless of latency
     while True:
         response = requests.get(base_url, headers=headers)
         response.raise_for_status()
