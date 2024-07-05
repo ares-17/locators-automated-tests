@@ -18,18 +18,8 @@ old_final_report_file = Path(config.get('aggregate_reports', 'old_final_report_f
 zip_file_name = zip_file_path.stem
 extracted_folder = Path.cwd() / zip_file_name
 target_folder = extracted_folder / 'target'
-jar_name = target_folder / 'unisciReportExcel-0.0.1-jarReportTest.jar'
+jar_name = str(target_folder / 'unisciReportExcel-0.0.1-jarReportTest.jar')
 surefire_reports_path = target_folder / 'surefire-reports'
-final_report_path = target_folder / 'reportComplessivo.xls'
-
-# Gestione percorsi troppo lunghi su Windows
-if platform.system() == "Windows":
-    extracted_folder = Path(f"\\\\?\\{extracted_folder}")
-    target_folder = Path(f"\\\\?\\{target_folder}")
-    surefire_reports_path = Path(f"\\\\?\\{surefire_reports_path}")
-    final_report_path = Path(f"\\\\?\\{final_report_path}")
-    final_report_destination_path = Path(f"\\\\?\\{final_report_destination_path}")
-    old_final_report_file = Path(f"\\\\?\\{old_final_report_file}")
 
 def remove_old_report_file():
     old_report = extracted_folder / 'reportComplessivo'
@@ -73,10 +63,21 @@ def copy_reports():
         shutil.copy(file_path, surefire_reports_path)
 
 def execute_jar():
-    subprocess.run(['java', '-jar', str(jar_name), str(surefire_reports_path), 'reportComplessivo'], check=True, capture_output=True)
+    try:
+        subprocess.run(['java', '-jar', jar_name, str(surefire_reports_path), 'reportComplessivo'], check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print("Error executing JAR file:")
+        print("Command:", e.cmd)
+        print("Return code:", e.returncode)
+        print("Output:", e.output)
+        print("Stderr:", e.stderr)
 
 def copy_final_report():
-    shutil.copy(final_report_path, final_report_destination_path)
+    final_report = target_folder / 'reportComplessivo.xls'
+    if final_report.exists():
+        shutil.copy(final_report, final_report_destination_path)
+    else:
+        print(f"Error: {final_report} not found.")
 
 def remove_old_final_report():
     if old_final_report_file.is_file():
