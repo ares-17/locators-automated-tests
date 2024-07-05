@@ -3,9 +3,17 @@ import subprocess
 import re
 from datetime import datetime
 from configparser import ConfigParser
+from pathlib import Path
+import platform
 
 config = ConfigParser()
 config.read('../config.ini')
+
+# Gestione dei percorsi troppo lunghi su Windows
+def handle_long_path(path):
+    if platform.system() == "Windows":
+        return Path(f"\\\\?\\{path}")
+    return Path(path)
 
 # Funzione per eseguire uno script bash
 def run_script(script):
@@ -13,8 +21,8 @@ def run_script(script):
 
 def get_tags():
     try:
-        current_dir = os.getcwd()
-        git_repo_path = config.get("get_all_tags", "git_repo_path").strip('"')
+        current_dir = Path.cwd()
+        git_repo_path = handle_long_path(config.get("get_all_tags", "git_repo_path").strip('"'))
         os.chdir(git_repo_path)
 
         tags = subprocess.check_output(["git", "tag"], text=True).splitlines()
@@ -43,7 +51,7 @@ def find_commits_with_tag(tag_list):
             commit_list = subprocess.check_output(["git", "log", "--grep", tag_no_prefix, "--format=%H"], text=True).splitlines()
             commits_with_tag.update(commit_list)
 
-            if(len(commit_list) == 0):
+            if len(commit_list) == 0:
                 tags_without_commit.append(tag)
             else:
                 tags_with_commit.append(tag)
@@ -84,9 +92,10 @@ def filter_strings(strings):
     return filtered_set
 
 tags = get_tags()
-commits_with_tag, tags_without_commit, tags_with_commit = find_commits_with_tag(tags)
-print(f"Numero totale commit distinte: {len(commits_with_tag)}")
-print(f"tags con commit: {len(tags_with_commit)}")
-print(f"tags senza commit: {len(tags_without_commit)}")
+if tags:
+    commits_with_tag, tags_without_commit, tags_with_commit = find_commits_with_tag(tags)
+    print(f"Numero totale commit distinte: {len(commits_with_tag)}")
+    print(f"tags con commit: {len(tags_with_commit)}")
+    print(f"tags senza commit: {len(tags_without_commit)}")
 
-create_tags_file(tags)
+    create_tags_file(tags)
