@@ -224,6 +224,15 @@ for tag in tags:
     print(f"[{tag}]: end tag\n\n")
 
 print(f"WAITING FOR ACTIONS TO COMPLETE ----------------")
+# wait for mainOnPush.yml action for "k" tags
+wait_for_actions_completion()
+for tag in tags:
+    if tag_contain_k(tag):
+        print(f"[{tag}]: creating release")
+        create_github_release(tag, branch_name)
+        print(f"[{tag}]: end tag\n\n")
+
+
 wait_for_actions_completion()
 
 print(f"INIT RELEASE DOWNLOAD ----------------")
